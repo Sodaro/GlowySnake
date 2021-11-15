@@ -43,7 +43,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 0, g: 0.94070315, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 10
   m_Range: 3
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 0}
-  bodyPartPrefab: {fileID: 0}
+  bodyPartPrefab: {fileID: 1078149246248668280, guid: cde7253c2e3a4db4296f43539d963013, type: 3}
 --- !u!1 &8966705221185525875
 GameObject:
   m_ObjectHideFlags: 0
