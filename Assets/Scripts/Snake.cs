@@ -1,27 +1,40 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using MyUtilities;
+using System.Collections;
 
 public class Snake : MonoBehaviour
 {
+
+    new Light light;
     [SerializeField]
     private GridGenerator grid;
+
+    MeshRenderer meshRenderer;
 
     [SerializeField]
     BodyPart bodyPartPrefab;
 
+    [SerializeField]
+    ParticleSystem particles;
+
     BodyPart head;
     BodyPart tail;
 
-    Coroutine moveRoutine;
     Vector3 prevPosition = Vector3.zero;
     Quaternion targetRotation = Quaternion.identity;
+
+    Coroutine deadRoutine;
 
     float moveDelay = 1f;
 
     float moveTimer = 0f;
     //TODO: make snake automated movement, make it controlled by AI, add A*
-
+    private void Awake()
+    {
+        light = GetComponent<Light>();
+        meshRenderer = GetComponent<MeshRenderer>();
+    }
 
     void MoveForward()
     {
@@ -29,12 +42,12 @@ public class Snake : MonoBehaviour
         Vector3? targetPosition = grid.GetPositionOnGridInDirection(transform.position, (Direction)transform.rotation.eulerAngles.y);
         if (targetPosition != null)
             transform.position = (Vector3)targetPosition;
-        else
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
         bool didCollide = grid.HandleHeadCollisions(this);
         if (didCollide)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            deadRoutine = StartCoroutine(Die());
+            return;
         }
         if (head != null)
         {
@@ -72,15 +85,29 @@ public class Snake : MonoBehaviour
         }
     }
 
-    private void Start()
+    IEnumerator Die()
     {
-        //moveRoutine = StartCoroutine(MoveForward(moveDelay));
+        particles.Play();
+        meshRenderer.enabled = false;
+        light.enabled = false;
+        BodyPart part = head;
+        while (part != null)
+        {
+            part.TriggerDeath();
+            yield return new WaitForSeconds(0.2f);
+            part = part.next;
+        }
+        deadRoutine = null;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        if (deadRoutine != null)
+        {
+            return;
+        }
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             //targetPosition = transform.position + Vector3.left;
@@ -104,25 +131,5 @@ public class Snake : MonoBehaviour
             MoveForward();
             moveTimer = 0;
         }
-        //if (moveRoutine == null)
-        //{
-        //    transform.rotation *= targetRotation;
-        //    targetRotation = Quaternion.identity;
-        //    moveRoutine = StartCoroutine(MoveForward(moveDelay));
-        //}
-        //else
-        //{
-
-        //}
-
-        //transform.rotation *= targetRotation;
-        //if (targetPosition != null)
-        //{
-        //    if (!grid.IsPointInsideBounds((Vector3)targetPosition))
-        //        return;
-
-        //    transform.position = (Vector3)targetPosition;
-            
-        //}
     }
 }

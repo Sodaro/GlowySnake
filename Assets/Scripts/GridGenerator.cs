@@ -255,38 +255,45 @@ public class GridGenerator : MonoBehaviour
         // match our transform
         GL.MultMatrix(transform.localToWorldMatrix);
 
-        // Draw lines
         GL.Begin(GL.LINES);
         GL.Color(Color.white);
-        for (int y = 0; y < gridPositions.GetLength(0); y++)
-        {
-            GL.Vertex(gridPositions[y, 0]);
-            GL.Vertex(gridPositions[y, gridPositions.GetLength(0) - 1]);
-        }
-        for (int x = 0; x < gridPositions.GetLength(0); x++)
-        {
-            GL.Vertex(gridPositions[0, x]);
-            GL.Vertex(gridPositions[gridPositions.GetLength(0) - 1, x]);
-        }
 
-        for (int y = 0; y < tiles.GetLength(0); y++)
-        {
-            
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                Color color = tiles[y, x].content != null ? Color.red : Color.green;
-                GL.Color(color);
-
-                GL.Vertex(tiles[y, x].position - new Vector3(0.1f, 0, 0f));
-                GL.Vertex(tiles[y, x].position + new Vector3(0.1f, 0, 0f));
-
-                GL.Vertex(tiles[y, x].position - new Vector3(0f, 0, 0.1f));
-                GL.Vertex(tiles[y, x].position + new Vector3(0f, 0, 0.1f));
-            }
-        }
+        DrawGridLines();
+        DrawCenterCrosses();
 
         GL.End();
 
         GL.PopMatrix();
+
+        void DrawGridLines()
+        {
+            for (int y = 0; y < gridPositions.GetLength(0); y++)
+            {
+                GL.Vertex(gridPositions[y, 0]);
+                GL.Vertex(gridPositions[y, gridPositions.GetLength(0) - 1]);
+            }
+            for (int x = 0; x < gridPositions.GetLength(0); x++)
+            {
+                GL.Vertex(gridPositions[0, x]);
+                GL.Vertex(gridPositions[gridPositions.GetLength(0) - 1, x]);
+            }
+        }
+
+        void DrawCenterCrosses()
+        {
+            for (int y = 0; y < tiles.GetLength(0); y++)
+            {
+                for (int x = 0; x < tiles.GetLength(0); x++)
+                {
+                    Color color = tiles[y, x].content != null ? Color.red : Color.green;
+                    GL.Color(color);
+
+                    GL.Vertex(tiles[y, x].position - new Vector3(0.1f, 0, 0f));
+                    GL.Vertex(tiles[y, x].position + new Vector3(0.1f, 0, 0f));
+                    GL.Vertex(tiles[y, x].position - new Vector3(0f, 0, 0.1f));
+                    GL.Vertex(tiles[y, x].position + new Vector3(0f, 0, 0.1f));
+                }
+            }
+        }
     }
 }
