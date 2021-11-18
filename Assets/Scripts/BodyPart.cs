@@ -1,32 +1,34 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using SnakeUtilities;
 
 public class BodyPart : MonoBehaviour
 {
-    new Light light;
-    MeshRenderer meshRenderer;
-    public GridGenerator grid;
-    [HideInInspector] public BodyPart next;
-    public Vector3 prevPosition;
-    [SerializeField] ParticleSystem particles;
+    protected new Light light;
+    protected MeshRenderer meshRenderer;
+    [HideInInspector] public BodyPart next;    
+    [SerializeField] protected ParticleSystem particles;
+    protected Vector3 prevPosition;
+    public Vector3 PreviousPosition => prevPosition;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         light = GetComponent<Light>();
         meshRenderer = GetComponent<MeshRenderer>();
     }
+
     public void SetPosition(Vector3 position)
     {
+        //move the body part to a position, move the next body part to the old position
         prevPosition = transform.position;
         transform.position = position;
         if (next != null)
             next.SetPosition(prevPosition);
-        grid.SetContent(transform.position, gameObject);
+        SnakeGrid.Instance.SetTileContent(transform.position, ContentType.SNAKE);
     }
 
     public void TriggerDeath()
     {
+        //activate particles and disable the lights and segment renderer
         particles.Play();
         light.enabled = false;
         meshRenderer.enabled = false;
