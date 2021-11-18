@@ -1,18 +1,19 @@
 using SnakeUtilities;
 using UnityEngine;
 using System.IO;
+using System;
+
 public class SnakeGrid : MonoBehaviour
 {
-    //[SerializeField] Material lineMaterial;
-    //Make Grid Singleton
     [SerializeField] private SnakeHead playerPrefab;
     [SerializeField] private GameObject wallPrefab;
+    [SerializeField] private GameObject applePrefab;
+
+    //Make Grid Singleton
     private static SnakeGrid _instance;
     public static SnakeGrid Instance => _instance;
 
-    //[SerializeField]
     private int rows = 10;
-    //[SerializeField]
     private int columns = 10;
 
     private float initialOffset = 5;
@@ -42,6 +43,78 @@ public class SnakeGrid : MonoBehaviour
             lineMaterial.SetInt("_ZWrite", 0);
         }
     }
+
+    public void GenerateLevelFromFile(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Debug.LogError($"COULD NOT FIND FILE AT PATH: {path}");
+            Application.Quit();
+            return;
+        }
+        if (gridPositions != null)
+        {
+            Array.Clear(gridPositions, 0, gridPositions.Length);
+        }
+        if (tiles != null)
+        {
+            foreach(GridTile tile in tiles)
+            {
+                if (tile.content != null)
+                {
+                    Destroy(tile.content);
+                }
+            }
+            Array.Clear(tiles, 0, tiles.Length);
+        }
+        
+
+        string[] lines = File.ReadAllLines(path);
+        rows = lines.Length;
+        columns = lines[0].Length;
+        initialOffset = rows / 2;
+
+        //grid lines is 1 greater than the tiles centered between lines
+        gridPositions = new Vector3[rows + 1, columns + 1];
+        tiles = new GridTile[rows, columns];
+        for (int row = 0; row < rows + 1; row++)
+        {
+            for (int col = 0; col < columns + 1; col++)
+            {
+                gridPositions[row, col] = new Vector3(col - initialOffset, 0, initialOffset - row);
+                if (row < rows && col < columns)
+                {
+                    //row 0 col 0 should be top left -> x value should be smallest, z value largest
+                    //row 5 col 5 should be bot right -> x value should be largest, z value smallest
+                    float zPos = initialOffset - row - 0.5f;
+                    float xPos = -(initialOffset - col - 0.5f);
+                    Vector3 tilePos = new Vector3(xPos, 0.5f, zPos);
+                    GameObject instance = null;
+                    ContentType contentType = ContentType.NONE;
+                    switch (lines[row][col])
+                    {
+                        case 'x':
+                            instance = Instantiate(wallPrefab, tilePos, Quaternion.identity);
+                            contentType = ContentType.WALL;
+                            break;
+                        case 'a':
+                            instance = Instantiate(applePrefab, tilePos, Quaternion.identity);
+                            contentType = ContentType.APPLE;
+                            break;
+                        case 'p':
+                            instance = Instantiate(playerPrefab.gameObject, tilePos, Quaternion.identity);
+                            contentType = ContentType.SNAKE;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    GridTile tile = new GridTile(tilePos, contentType, instance);
+                    tiles[row, col] = tile;
+                }
+            }
+        }
+    }
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -51,60 +124,6 @@ public class SnakeGrid : MonoBehaviour
         }
 
         _instance = this;
-        string path = Application.streamingAssetsPath + "/level.txt";
-        if (!File.Exists(path))
-        {
-            Debug.LogError($"COULD NOT FIND FILE AT PATH: {path}");
-            Application.Quit();
-        }
-
-        string[] lines = File.ReadAllLines(path);
-        rows = lines.Length;
-        columns = lines[0].Length;
-
-        //grid lines is 1 greater than the tiles centered between lines
-        gridPositions = new Vector3[rows + 1, columns + 1];
-        tiles = new GridTile[rows, columns];
-        for (int y = 0; y < rows + 1; y++)
-        {
-            for (int x = 0; x < columns + 1; x++)
-            {
-                gridPositions[y, x] = new Vector3(x - initialOffset, 0, y - initialOffset);
-                if (y < rows && x < columns)
-                {
-                    Vector3 tilePos = new Vector3(x + 0.5f - initialOffset, 0.5f, y + 0.5f - initialOffset);
-                    GameObject instance = null;
-                    ContentType contentType = ContentType.NONE;
-                    switch (lines[y][x])
-                    {
-                        case 'x':
-                            instance = Instantiate(wallPrefab, tilePos, Quaternion.identity);
-                            contentType = ContentType.WALL;
-                            break;
-                        case 'p':
-                            instance = Instantiate(playerPrefab.gameObject, tilePos, Quaternion.identity);
-                            contentType = ContentType.SNAKE;
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    GridTile tile = new GridTile(tilePos, contentType, instance);
-                    tiles[y, x] = tile;
-                }
-            }
-        }
-
-        
-        //foreach (string line in lines)
-        //{
-        //    for (int i = 0; i < line.Length; i++)
-        //    {
-
-        //    }
-        //}
-
-
     }
 
     public Vector3 GetPositionOnGridInDirection(Vector3 position, Direction direction)
@@ -114,10 +133,10 @@ public class SnakeGrid : MonoBehaviour
         switch(direction)
         {
             case Direction.UP:
-                row += 1;
+                row -= 1;
                 break;
             case Direction.DOWN:
-                row -= 1;
+                row += 1;
                 break;
             case Direction.LEFT:
                 col -= 1;
@@ -130,12 +149,12 @@ public class SnakeGrid : MonoBehaviour
         //wrap the index around if player leaves grid on sides
         if (row < 0)
             row = tiles.GetLength(0) - 1;
-        if (row >= tiles.GetLength(0))
+        else if (row >= tiles.GetLength(0))
             row = 0;
 
         if (col < 0)
             col = tiles.GetLength(1) - 1;
-        if (col >= tiles.GetLength(1))
+        else if (col >= tiles.GetLength(1))
             col = 0;
 
         return tiles[row, col].position;
@@ -148,8 +167,8 @@ public class SnakeGrid : MonoBehaviour
         int i = 0;
         do
         {
-            row = Random.Range(0, tiles.GetLength(0));
-            col = Random.Range(0, tiles.GetLength(1));
+            row = UnityEngine.Random.Range(0, tiles.GetLength(0));
+            col = UnityEngine.Random.Range(0, tiles.GetLength(1));
             i++;
         } while (tiles[row, col].contentType != ContentType.NONE && i < maxLoopCount);
 
@@ -158,8 +177,8 @@ public class SnakeGrid : MonoBehaviour
 
     private GridTile? GetTileFromPosition(Vector3 position, out int row, out int col)
     {
-        row = BinarySearchZPosition(position.z, 0, rows - 1);
-        col = BinarySearchXPosition(position.x, 0, columns - 1);
+        row = BinarySearchZPosition(position.z, 0, rows);
+        col = BinarySearchXPosition(position.x, 0, columns);
         if (row == -1 || col == -1)
             return null;
 
@@ -198,6 +217,7 @@ public class SnakeGrid : MonoBehaviour
 
     private int BinarySearchZPosition(float zPos, int left, int right)
     {
+        //index[0,0] has the highest z value and lowest x value
         if (left < right)
         {
             int mid = (left + right) / 2;
@@ -207,11 +227,11 @@ public class SnakeGrid : MonoBehaviour
             }
             else if (zPos > tiles[mid, 0].position.z)
             {
-                return BinarySearchZPosition(zPos, mid + 1, right);
+                return BinarySearchZPosition(zPos, left, mid - 1);
             }
             else
             {
-                return BinarySearchZPosition(zPos, left, mid - 1);
+                return BinarySearchZPosition(zPos, mid + 1, right);
             }
         }
 
@@ -224,6 +244,7 @@ public class SnakeGrid : MonoBehaviour
 
     private int BinarySearchXPosition(float xPos, int left, int right)
     {
+        //index[length-1,length-1] has the highest x value and lowest z value
         if (left < right)
         {
             int mid = (left + right) / 2;
@@ -275,7 +296,11 @@ public class SnakeGrid : MonoBehaviour
     public void OnRenderObject()
     {
         CreateLineMaterial();
+        if (gridPositions == null)
+            return;
 
+        if (gridPositions.Length == 0)
+            return;
         GL.PushMatrix();
         lineMaterial.SetPass(0);
         //GL.LoadOrtho();
@@ -294,9 +319,9 @@ public class SnakeGrid : MonoBehaviour
         {
             float endPosX = gridPositions[0, gridPositions.GetLength(1) - 1].x;
             float endPosZ = gridPositions[gridPositions.GetLength(0) - 1, 0].z;
-            for (int y = 0; y < gridPositions.GetLength(0); y++)
+            for (int row = 0; row < gridPositions.GetLength(0); row++)
             {
-                Vector3 pos1 = gridPositions[y, 0];
+                Vector3 pos1 = gridPositions[row, 0];
                 GL.Vertex(new Vector3(pos1.x, pos1.y, pos1.z - 0.05f));
                 GL.Vertex(new Vector3(pos1.x, pos1.y, pos1.z + 0.05f));
                 GL.Vertex(new Vector3(endPosX, pos1.y, pos1.z + 0.05f));
@@ -315,16 +340,16 @@ public class SnakeGrid : MonoBehaviour
 
         void DrawTileCenter()
         {
-            for (int y = 0; y < tiles.GetLength(0); y++)
+            for (int row = 0; row < tiles.GetLength(0); row++)
             {
-                for (int x = 0; x < tiles.GetLength(1); x++)
+                for (int col = 0; col < tiles.GetLength(1); col++)
                 {
-                    Color color = tiles[y, x].contentType != ContentType.NONE ? Color.red : Color.green;
+                    Color color = tiles[row, col].contentType != ContentType.NONE ? Color.red : Color.green;
                     GL.Color(color);
-                    GL.Vertex(tiles[y, x].position + new Vector3(0, 0, 0.1f));
-                    GL.Vertex(tiles[y, x].position + new Vector3(0.1f, 0, 0f));
-                    GL.Vertex(tiles[y, x].position + new Vector3(0f, 0, -0.1f));
-                    GL.Vertex(tiles[y, x].position + new Vector3(-0.1f, 0, 0f));
+                    GL.Vertex(tiles[row, col].position + new Vector3(0, 0, 0.1f));
+                    GL.Vertex(tiles[row, col].position + new Vector3(0.1f, 0, 0f));
+                    GL.Vertex(tiles[row, col].position + new Vector3(0f, 0, -0.1f));
+                    GL.Vertex(tiles[row, col].position + new Vector3(-0.1f, 0, 0f));
                 }
             }
         }

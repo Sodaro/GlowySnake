@@ -5,8 +5,19 @@ using SnakeUtilities;
 public class AppleSpawner : MonoBehaviour
 {
     [SerializeField] GameObject applePrefab;
-    [SerializeField] SnakeGrid grid; 
-    private void Start()
+    [SerializeField] SnakeGrid grid;
+
+    private void OnEnable()
+    {
+        EventHandler.onGameStarted += StartSpawningApples;
+    }
+
+    private void OnDisable()
+    {
+        EventHandler.onGameStarted -= StartSpawningApples;
+    }
+
+    void StartSpawningApples()
     {
         StartCoroutine(SpawnApples());
     }

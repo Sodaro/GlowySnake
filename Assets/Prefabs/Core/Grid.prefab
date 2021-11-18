@@ -43,5 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29c7fa060d0eca74b824ac64f9f0e684, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 10
-  columns: 10
+  playerPrefab: {fileID: 163553147, guid: e82a40942c294b3428faf7a2d8f877c8, type: 3}
+  wallPrefab: {fileID: 8525351151081421498, guid: 103c449da8da756458d6de67b6a48965, type: 3}
+  applePrefab: {fileID: 193750114908014511, guid: e03f2d6f6fc34af43a4b18a3531a336c, type: 3}

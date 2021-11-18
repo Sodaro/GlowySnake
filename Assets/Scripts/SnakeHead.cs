@@ -17,6 +17,29 @@ public class SnakeHead : BodyPart
     private float moveDelay = 1f;
     private float moveTimer = 0f;
 
+    private bool canMove = false;
+
+
+    private void OnEnable()
+    {
+        EventHandler.onGameStarted += Activate;
+        EventHandler.onGamePaused += Deactivate;
+    }
+    void Deactivate()
+    {
+        canMove = false;
+    }
+    void Activate()
+    {
+        canMove = true;
+    }
+
+    private void OnDisable()
+    {
+        EventHandler.onGameStarted -= Activate;
+        EventHandler.onGamePaused -= Deactivate;
+    }
+
     void MoveForward()
     {
         prevPosition = transform.position;
@@ -84,6 +107,8 @@ public class SnakeHead : BodyPart
     // Update is called once per frame
     void Update()
     {
+        if (!canMove)
+            return;
         if (deadRoutine != null)
             return;
         //left arrow: rotate -90 degrees, rightarrow: rotate +90 degrees
