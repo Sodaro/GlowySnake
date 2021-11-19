@@ -1,0 +1,8 @@
+play button: https://icon-icons.com/icon/start-play/132803
+modifications: fill color
+arrow buttons: https://icon-icons.com/icon/arrow-right/132745
+modifications: fill color
+save icon: https://icon-icons.com/icon/save-as/4603
+modifications: fill color
+cog icon: https://icon-icons.com/icon/cog/125323
+modifications: fill color

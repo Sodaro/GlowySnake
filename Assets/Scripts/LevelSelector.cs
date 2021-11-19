@@ -45,7 +45,13 @@ public class LevelSelector : MonoBehaviour
         editorButton.onClick.RemoveListener(LoadLevelEditor);
         exitGameButton.onClick.RemoveListener(ExitGame);
     }
-
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SceneHandler.Instance.RestartScene();
+        }
+    }
 
     void ExitGame()
     {
@@ -60,6 +66,8 @@ public class LevelSelector : MonoBehaviour
     void StartGame()
     {
         if (files.Length == 0)
+            return;
+        if (!grid.IsValidLevel)
             return;
         EventHandler.Instance.RaiseOnGameStarted();
         gameObject.SetActive(false);

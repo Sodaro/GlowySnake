@@ -9,6 +9,8 @@ public class SnakeGrid : MonoBehaviour
     [SerializeField] private GameObject wallPrefab;
     [SerializeField] private GameObject applePrefab;
 
+    private bool isValidLevel = false;
+    public bool IsValidLevel => isValidLevel;
 
     private struct Quad
     {
@@ -86,8 +88,15 @@ public class SnakeGrid : MonoBehaviour
         }
 
         string[] lines = File.ReadAllLines(path);
+        if (lines.Length == 0)
+            return;
+
         rows = lines.Length;
         columns = lines[0].Length;
+        if (rows > 1 && columns > 1)
+            isValidLevel = true;
+        else
+            isValidLevel = false;
 
         initialOffset = rows / 2;
 

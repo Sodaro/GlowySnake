@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 //TextEditorWindow
-public class LevelEditor : EditorWindow
+public class LevelEditorWindow : EditorWindow
 {
     public string description = ";x = wall tile\n" +
         ";p = player start (facing forward z by default)\n" +
@@ -26,7 +26,7 @@ public class LevelEditor : EditorWindow
     static void Init()
     {
         // Get existing open window or if none, make a new one:
-        LevelEditor window = (LevelEditor)EditorWindow.GetWindow(typeof(LevelEditor));
+        LevelEditorWindow window = (LevelEditorWindow)EditorWindow.GetWindow(typeof(LevelEditorWindow));
         window.Show();
 
     }
