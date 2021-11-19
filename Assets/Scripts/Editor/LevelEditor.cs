@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEditor;
-using System.IO;
 using System;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
 
+//TextEditorWindow
 public class LevelEditor : EditorWindow
 {
     public string description = ";x = wall tile\n" +
@@ -19,7 +20,7 @@ public class LevelEditor : EditorWindow
     string errorMessage = string.Empty;
 
     string FilePath => path + "/" + fileName + ".txt";
-    string RelativePath => "Assets/StreamingAssets/" + fileName + ".txt";
+    string RelativePath => "Assets/StreamingAssets/Levels/" + fileName + ".txt";
     // Add menu named "My Window" to the Window menu
     [MenuItem("Window/LevelEditor Window")]
     static void Init()
@@ -27,7 +28,7 @@ public class LevelEditor : EditorWindow
         // Get existing open window or if none, make a new one:
         LevelEditor window = (LevelEditor)EditorWindow.GetWindow(typeof(LevelEditor));
         window.Show();
-        
+
     }
     void WriteFile()
     {
@@ -52,9 +53,7 @@ public class LevelEditor : EditorWindow
         {
             if (fileName != string.Empty)
             {
-
-
-                string[] lines = stringToEdit.Split(new string[] { Environment.NewLine, "\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries);
+                string[] lines = stringToEdit.Split(new string[] { Environment.NewLine, "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 if (lines.Length == 0)
                 {
                     errorMessage = "Content must not be empty";
@@ -82,7 +81,7 @@ public class LevelEditor : EditorWindow
             else
             {
                 errorMessage = "FILE NAME MUST NOT BE EMPTY";
-            }    
+            }
         }
         GUILayout.Label(description, EditorStyles.boldLabel);
         GUILayout.Label(errorMessage, EditorStyles.boldLabel);

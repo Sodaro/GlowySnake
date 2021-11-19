@@ -1,11 +1,11 @@
-using UnityEngine;
 using SnakeUtilities;
+using UnityEngine;
 
 public class BodyPart : MonoBehaviour
 {
     protected new Light light;
     protected MeshRenderer meshRenderer;
-    [HideInInspector] public BodyPart next;    
+    [HideInInspector] public BodyPart next;
     [SerializeField] protected ParticleSystem particles;
     protected Vector3 prevPosition;
     public Vector3 PreviousPosition => prevPosition;

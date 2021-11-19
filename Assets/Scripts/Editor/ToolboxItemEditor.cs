@@ -1,9 +1,10 @@
-using UnityEngine;
-using UnityEditor;
 using SnakeUtilities;
-using UnityEngine.UI;
-using System.Collections;
+using UnityEditor;
+using UnityEngine;
 
+
+//Editor window for the toolbox items in the level editor
+//Only shows a sprite field and an enum drop down
 [CustomEditor(typeof(ToolboxItem))]
 public class ToolBoxItemEditor : UnityEditor.UI.ButtonEditor
 {

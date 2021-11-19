@@ -1,8 +1,7 @@
-using UnityEngine;
 using System.IO;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class LevelSelector : MonoBehaviour
 {
@@ -12,12 +11,15 @@ public class LevelSelector : MonoBehaviour
     [SerializeField] Button previousButton;
     [SerializeField] Button nextButton;
     [SerializeField] Button editorButton;
+    [SerializeField] Button exitGameButton;
     int selectedIndex = 0;
     string[] files;
     private void Awake()
     {
         files = Directory.GetFiles(Application.streamingAssetsPath + "/Levels/", "*.txt", SearchOption.TopDirectoryOnly);
-        UpdateDisplayedLevelName(Path.GetFileName(files[selectedIndex]));            
+        if (files.Length == 0)
+            return;
+        UpdateDisplayedLevelName(Path.GetFileName(files[selectedIndex]));
     }
 
     private void Start()
@@ -33,6 +35,7 @@ public class LevelSelector : MonoBehaviour
         previousButton.onClick.AddListener(DecrementIndex);
         playButton.onClick.AddListener(StartGame);
         editorButton.onClick.AddListener(LoadLevelEditor);
+        exitGameButton.onClick.AddListener(ExitGame);
     }
     private void OnDisable()
     {
@@ -40,15 +43,24 @@ public class LevelSelector : MonoBehaviour
         previousButton.onClick.RemoveListener(DecrementIndex);
         playButton.onClick.RemoveListener(StartGame);
         editorButton.onClick.RemoveListener(LoadLevelEditor);
+        exitGameButton.onClick.RemoveListener(ExitGame);
+    }
+
+
+    void ExitGame()
+    {
+        SceneHandler.Instance.ExitGame();
     }
 
     void LoadLevelEditor()
     {
-        SceneManager.LoadScene(1);
+        SceneHandler.Instance.LoadScene(BuildScene.LevelEditor);
     }
 
     void StartGame()
     {
+        if (files.Length == 0)
+            return;
         EventHandler.Instance.RaiseOnGameStarted();
         gameObject.SetActive(false);
     }
@@ -61,6 +73,8 @@ public class LevelSelector : MonoBehaviour
 
     void IncrementIndex()
     {
+        if (files.Length == 0)
+            return;
         selectedIndex++;
         selectedIndex %= files.Length;
         //Debug.Log($"selectedIndex: {selectedIndex}");
@@ -70,6 +84,9 @@ public class LevelSelector : MonoBehaviour
 
     void DecrementIndex()
     {
+        if (files.Length == 0)
+            return;
+
         selectedIndex--;
         if (selectedIndex < 0)
             selectedIndex = files.Length - 1;

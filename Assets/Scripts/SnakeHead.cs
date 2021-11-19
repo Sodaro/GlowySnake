@@ -1,7 +1,7 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
 using SnakeUtilities;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SnakeHead : BodyPart
 {
@@ -23,11 +23,6 @@ public class SnakeHead : BodyPart
     private void OnEnable()
     {
         EventHandler.onGameStarted += Activate;
-        EventHandler.onGamePaused += Deactivate;
-    }
-    void Deactivate()
-    {
-        canMove = false;
     }
     void Activate()
     {
@@ -37,7 +32,6 @@ public class SnakeHead : BodyPart
     private void OnDisable()
     {
         EventHandler.onGameStarted -= Activate;
-        EventHandler.onGamePaused -= Deactivate;
     }
 
     void MoveForward()

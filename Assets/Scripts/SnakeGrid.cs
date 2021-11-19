@@ -1,13 +1,32 @@
 using SnakeUtilities;
-using UnityEngine;
-using System.IO;
 using System;
+using System.IO;
+using UnityEngine;
 
 public class SnakeGrid : MonoBehaviour
 {
     [SerializeField] private SnakeHead playerPrefab;
     [SerializeField] private GameObject wallPrefab;
     [SerializeField] private GameObject applePrefab;
+
+
+    private struct Quad
+    {
+        public Quad(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
+        {
+            this.v1 = v1;
+            this.v2 = v2;
+            this.v3 = v3;
+            this.v4 = v4;
+        }
+        public Vector3 v1;
+        public Vector3 v2;
+        public Vector3 v3;
+        public Vector3 v4;
+    }
+
+    private Quad[] gridQuads;
+    private Quad[] centerQuads;
 
     //Make Grid Singleton
     private static SnakeGrid _instance;
@@ -18,8 +37,8 @@ public class SnakeGrid : MonoBehaviour
 
     private float initialOffset = 5;
 
-    private Vector3[,] gridPositions;
-    
+    private Vector3[,] gridLinePositions;
+
     private GridTile[,] tiles;
 
     static Material lineMaterial;
@@ -52,36 +71,35 @@ public class SnakeGrid : MonoBehaviour
             Application.Quit();
             return;
         }
-        if (gridPositions != null)
+        if (gridLinePositions != null)
         {
-            Array.Clear(gridPositions, 0, gridPositions.Length);
+            Array.Clear(gridLinePositions, 0, gridLinePositions.Length);
         }
         if (tiles != null)
         {
-            foreach(GridTile tile in tiles)
+            foreach (GridTile tile in tiles)
             {
                 if (tile.content != null)
-                {
                     Destroy(tile.content);
-                }
             }
             Array.Clear(tiles, 0, tiles.Length);
         }
-        
 
         string[] lines = File.ReadAllLines(path);
         rows = lines.Length;
         columns = lines[0].Length;
+
         initialOffset = rows / 2;
 
-        //grid lines is 1 greater than the tiles centered between lines
-        gridPositions = new Vector3[rows + 1, columns + 1];
+
+        gridLinePositions = new Vector3[rows + 1, columns + 1];
         tiles = new GridTile[rows, columns];
         for (int row = 0; row < rows + 1; row++)
         {
             for (int col = 0; col < columns + 1; col++)
             {
-                gridPositions[row, col] = new Vector3(col - initialOffset, 0, initialOffset - row);
+                gridLinePositions[row, col] = new Vector3(col - initialOffset, 0, initialOffset - row);
+                //there is 1 additional line than there is a tile position
                 if (row < rows && col < columns)
                 {
                     //row 0 col 0 should be top left -> x value should be smallest, z value largest
@@ -108,10 +126,58 @@ public class SnakeGrid : MonoBehaviour
                         default:
                             break;
                     }
-
                     GridTile tile = new GridTile(tilePos, contentType, instance);
                     tiles[row, col] = tile;
                 }
+            }
+        }
+
+        //add the gridlines
+        gridQuads = new Quad[gridLinePositions.Length];
+        centerQuads = new Quad[tiles.Length];
+        CalculateGridLines();
+        CalculateGridCenterLines();
+
+    }
+    private void CalculateGridLines()
+    {
+        float endPosX = gridLinePositions[0, gridLinePositions.GetLength(1) - 1].x;
+        float endPosZ = gridLinePositions[gridLinePositions.GetLength(0) - 1, 0].z;
+
+        for (int row = 0; row < gridLinePositions.GetLength(0); row++)
+        {
+            Vector3 pos1 = gridLinePositions[row, 0];
+
+            Vector3 v1 = new Vector3(pos1.x, pos1.y, pos1.z - 0.05f);
+            Vector3 v2 = new Vector3(pos1.x, pos1.y, pos1.z + 0.05f);
+            Vector3 v3 = new Vector3(endPosX, pos1.y, pos1.z + 0.05f);
+            Vector3 v4 = new Vector3(endPosX, pos1.y, pos1.z - 0.05f);
+            gridQuads[row] = new Quad(v1, v2, v3, v4);
+        }
+        //offset starting index for column lines 
+        int index = gridLinePositions.GetLength(0);
+        for (int col = 0; col < gridLinePositions.GetLength(1); col++, index++)
+        {
+            Vector3 pos1 = gridLinePositions[0, col];
+            Vector3 v1 = new Vector3(pos1.x - 0.05f, pos1.y, pos1.z);
+            Vector3 v2 = new Vector3(pos1.x - 0.05f, pos1.y, endPosZ);
+            Vector3 v3 = new Vector3(pos1.x + 0.05f, pos1.y, endPosZ);
+            Vector3 v4 = new Vector3(pos1.x + 0.05f, pos1.y, pos1.z);
+            gridQuads[index] = new Quad(v1, v2, v3, v4);
+        }
+    }
+    private void CalculateGridCenterLines()
+    {
+        int index = 0;
+        for (int row = 0; row < tiles.GetLength(0); row++)
+        {
+            for (int col = 0; col < tiles.GetLength(1); col++, index++)
+            {
+                Vector3 v1 = tiles[row, col].position + new Vector3(0, 0, 0.1f);
+                Vector3 v2 = tiles[row, col].position + new Vector3(0.1f, 0, 0f);
+                Vector3 v3 = tiles[row, col].position + new Vector3(0f, 0, -0.1f);
+                Vector3 v4 = tiles[row, col].position + new Vector3(-0.1f, 0, 0f);
+                centerQuads[index] = new Quad(v1, v2, v3, v4);
             }
         }
     }
@@ -130,7 +196,7 @@ public class SnakeGrid : MonoBehaviour
     {
         //get the row and column indices of the snake on the grid
         GetTileFromPosition(position, out int row, out int col);
-        switch(direction)
+        switch (direction)
         {
             case Direction.UP:
                 row -= 1;
@@ -196,8 +262,8 @@ public class SnakeGrid : MonoBehaviour
 
     public void SetTileContent(Vector3 position, ContentType contentType)
     {
-        int rowIndex = BinarySearchZPosition(position.z, 0, rows-1);
-        int colIndex = BinarySearchXPosition(position.x, 0, columns-1);
+        int rowIndex = BinarySearchZPosition(position.z, 0, rows - 1);
+        int colIndex = BinarySearchXPosition(position.x, 0, columns - 1);
         if (rowIndex == -1 || colIndex == -1)
             return;
 
@@ -221,7 +287,7 @@ public class SnakeGrid : MonoBehaviour
         if (left < right)
         {
             int mid = (left + right) / 2;
-            if (Mathf.Approximately(zPos, tiles[mid,0].position.z))
+            if (Mathf.Approximately(zPos, tiles[mid, 0].position.z))
             {
                 return mid;
             }
@@ -235,7 +301,7 @@ public class SnakeGrid : MonoBehaviour
             }
         }
 
-        if (Mathf.Approximately(tiles[left,0].position.z, zPos))
+        if (Mathf.Approximately(tiles[left, 0].position.z, zPos))
             return left;
         else
             return -1;
@@ -292,19 +358,16 @@ public class SnakeGrid : MonoBehaviour
         return false;
     }
 
-    //Draw the gridlines and x in center positions
+    //Draw the gridlines and the rhombus in center positions
     public void OnRenderObject()
     {
         CreateLineMaterial();
-        if (gridPositions == null)
+        if (tiles == null)
             return;
 
-        if (gridPositions.Length == 0)
-            return;
         GL.PushMatrix();
         lineMaterial.SetPass(0);
-        //GL.LoadOrtho();
-        //GL.MultMatrix(transform.localToWorldMatrix);
+        GL.MultMatrix(transform.localToWorldMatrix);
 
         GL.Begin(GL.QUADS);
         GL.Color(Color.white);
@@ -317,41 +380,35 @@ public class SnakeGrid : MonoBehaviour
 
         void DrawGridLines()
         {
-            float endPosX = gridPositions[0, gridPositions.GetLength(1) - 1].x;
-            float endPosZ = gridPositions[gridPositions.GetLength(0) - 1, 0].z;
-            for (int row = 0; row < gridPositions.GetLength(0); row++)
-            {
-                Vector3 pos1 = gridPositions[row, 0];
-                GL.Vertex(new Vector3(pos1.x, pos1.y, pos1.z - 0.05f));
-                GL.Vertex(new Vector3(pos1.x, pos1.y, pos1.z + 0.05f));
-                GL.Vertex(new Vector3(endPosX, pos1.y, pos1.z + 0.05f));
-                GL.Vertex(new Vector3(endPosX, pos1.y, pos1.z - 0.05f));
+            foreach (var quad in gridQuads)
+                DrawQuad(quad);
 
-            }
-            for (int x = 0; x < gridPositions.GetLength(1); x++)
-            {
-                Vector3 pos1 = gridPositions[0, x];
-                GL.Vertex(new Vector3(pos1.x - 0.05f, pos1.y, pos1.z));
-                GL.Vertex(new Vector3(pos1.x - 0.05f, pos1.y, endPosZ));
-                GL.Vertex(new Vector3(pos1.x + 0.05f, pos1.y, endPosZ));
-                GL.Vertex(new Vector3(pos1.x + 0.05f, pos1.y, pos1.z));
-            }
+            //foreach (var quad in verticalQuads)
+            //    DrawQuad(quad);
         }
 
         void DrawTileCenter()
         {
+            int index = 0;
             for (int row = 0; row < tiles.GetLength(0); row++)
             {
                 for (int col = 0; col < tiles.GetLength(1); col++)
                 {
                     Color color = tiles[row, col].contentType != ContentType.NONE ? Color.red : Color.green;
                     GL.Color(color);
-                    GL.Vertex(tiles[row, col].position + new Vector3(0, 0, 0.1f));
-                    GL.Vertex(tiles[row, col].position + new Vector3(0.1f, 0, 0f));
-                    GL.Vertex(tiles[row, col].position + new Vector3(0f, 0, -0.1f));
-                    GL.Vertex(tiles[row, col].position + new Vector3(-0.1f, 0, 0f));
+                    Quad quad = centerQuads[index];
+                    DrawQuad(quad);
+                    index++;
                 }
             }
+        }
+
+        void DrawQuad(Quad quad)
+        {
+            GL.Vertex(quad.v1);
+            GL.Vertex(quad.v2);
+            GL.Vertex(quad.v3);
+            GL.Vertex(quad.v4);
         }
     }
 }

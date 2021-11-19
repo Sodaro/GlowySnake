@@ -1,6 +1,6 @@
+using SnakeUtilities;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using SnakeUtilities;
 using UnityEngine.UI;
 
 public class GridObject : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler

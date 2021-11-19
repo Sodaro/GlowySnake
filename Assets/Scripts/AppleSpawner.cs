@@ -1,6 +1,6 @@
+using SnakeUtilities;
 using System.Collections;
 using UnityEngine;
-using SnakeUtilities;
 
 public class AppleSpawner : MonoBehaviour
 {

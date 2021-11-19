@@ -1,6 +1,6 @@
-using UnityEngine.UI;
 using SnakeUtilities;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ToolboxItem : Button
 {
