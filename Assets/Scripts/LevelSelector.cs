@@ -45,13 +45,6 @@ public class LevelSelector : MonoBehaviour
         editorButton.onClick.RemoveListener(LoadLevelEditor);
         exitGameButton.onClick.RemoveListener(ExitGame);
     }
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            SceneHandler.Instance.RestartScene();
-        }
-    }
 
     void ExitGame()
     {

@@ -387,6 +387,12 @@ public class SnakeGrid : MonoBehaviour
         GL.End();
         GL.PopMatrix();
 
+        /*
+         * GL should only be drawn inside render functions
+         * so I use local functions for some clarity in what is happening
+         * and to avoid repeating lines several times
+        */
+
         void DrawGridLines()
         {
             foreach (var quad in gridQuads)
@@ -411,7 +417,7 @@ public class SnakeGrid : MonoBehaviour
                 }
             }
         }
-
+        
         void DrawQuad(Quad quad)
         {
             GL.Vertex(quad.v1);
@@ -420,4 +426,14 @@ public class SnakeGrid : MonoBehaviour
             GL.Vertex(quad.v4);
         }
     }
+
+    //there will always be a grid so adding a backup exit keycheck here
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            SceneHandler.Instance.RestartScene();
+        }
+    }
+
 }
